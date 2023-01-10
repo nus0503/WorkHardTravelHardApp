@@ -3,28 +3,49 @@ import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from './colors';
-import { AntDesign } from '@expo/vector-icons'; 
+import { AntDesign, MaterialIcons } from '@expo/vector-icons'; 
 
 const STORAGE_KEY = "@toDos";
+const WORK_STORAGE_KEY = "@work";
 
 export default function App() {
   const [working, setWorking] = useState(true);
+  console.log(working);
   const [text, setText] = useState("");
   const [toDos, setToDos] = useState({});
   useEffect(() => {
     loadToDos();
+    loadWork();
   }, []);
-  const travel = () => setWorking(false);
-  const work = () => setWorking(true);
+  useEffect(() => {
+    saveWork();
+  }, [working]);
+  const travel = () => {
+    setWorking(false);
+    //saveWork();
+  };
+  const work = () => {
+    setWorking(true);
+    //saveWork();
+  };
   const onChangeText = (payload) => setText(payload);
   const saveToDos = async (toSave) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   };
+  const saveWork = async () => {
+    await AsyncStorage.setItem(WORK_STORAGE_KEY, working.toString());
+  };
+  const loadWork = async () => {
+    const s = await AsyncStorage.getItem(WORK_STORAGE_KEY);
+    const convertBool = (s.toLowerCase() === 'true');
+    setWorking(convertBool);
+  }
   const loadToDos = async () => {
     const s = await AsyncStorage.getItem(STORAGE_KEY);
+    console.log("a");
     setToDos(JSON.parse(s));
   };
-  
+  console.log(working);
   const addToDo = async () => {
     if (text === "") {
       return;
@@ -41,7 +62,6 @@ export default function App() {
     await saveToDos(newToDos);
     setText("");
   };
-  //console.log(toDos);
   const deleteToDo = (key) => {
     Alert.alert("Delete To Do", "Are you Sure?", [
       {text : "Cancel"},
@@ -78,7 +98,11 @@ export default function App() {
         {
         Object.keys(toDos).map((key) => (
         toDos[key].working === working ? <View style={styles.toDo} key={key}>
-        <Text style={styles.toDoText}>{toDos[key].text}</Text>
+        <Text selectable={true} style={styles.toDoText}>{toDos[key].text}</Text>
+        <TouchableOpacity>
+          <MaterialIcons name="done" size={24} color="black" />
+          <MaterialIcons name="remove-done" size={24} color="black" />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => deleteToDo(key)}>
           <AntDesign name="delete" size={24} color="white" />
         </TouchableOpacity>
