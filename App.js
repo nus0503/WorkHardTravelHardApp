@@ -1,20 +1,35 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from './colors';
+import { AntDesign } from '@expo/vector-icons'; 
+
+const STORAGE_KEY = "@toDos";
 
 export default function App() {
   const [working, setWorking] = useState(true);
   const [text, setText] = useState("");
   const [toDos, setToDos] = useState({});
+  useEffect(() => {
+    loadToDos();
+  }, []);
   const travel = () => setWorking(false);
   const work = () => setWorking(true);
   const onChangeText = (payload) => setText(payload);
-  const addToDo = () => {
+  const saveToDos = async (toSave) => {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  };
+  const loadToDos = async () => {
+    const s = await AsyncStorage.getItem(STORAGE_KEY);
+    setToDos(JSON.parse(s));
+  };
+  
+  const addToDo = async () => {
     if (text === "") {
       return;
     }
-    const newToDos = Object.assign({}, toDos, {[Date.now()] : {text, work : working}});
+    const newToDos = Object.assign({}, toDos, {[Date.now()] : {text, working}});
 
     //                                     ↕
 
@@ -23,9 +38,23 @@ export default function App() {
     //  [Date.now()] : {text, work : working}  
     //};
     setToDos(newToDos);
+    await saveToDos(newToDos);
     setText("");
   };
-  console.log(toDos);
+  //console.log(toDos);
+  const deleteToDo = (key) => {
+    Alert.alert("Delete To Do", "Are you Sure?", [
+      {text : "Cancel"},
+      {text : "Ok",
+      style : 'destructive',
+      onPress : async () => {
+        const newToDos = {...toDos};
+        delete newToDos[key]
+        setToDos(newToDos);
+        saveToDos(newToDos);
+      }},
+    ]);
+  };
   
   return (
     <View style={styles.container}>
@@ -48,10 +77,13 @@ export default function App() {
       <ScrollView>
         {
         Object.keys(toDos).map((key) => (
-        <View style={styles.toDo} key={key}>
-          <Text style={styles.toDoText}>{toDos[key].text}</Text>
-        </View>)
-        )}
+        toDos[key].working === working ? <View style={styles.toDo} key={key}>
+        <Text style={styles.toDoText}>{toDos[key].text}</Text>
+        <TouchableOpacity onPress={() => deleteToDo(key)}>
+          <AntDesign name="delete" size={24} color="white" />
+        </TouchableOpacity>
+        </View> : null
+        ))}
       </ScrollView>
     </View>
   );
@@ -86,6 +118,9 @@ const styles = StyleSheet.create({
     paddingVertical : 20,
     paddingHorizontal: 20,
     borderRadius : 15,
+    flexDirection : 'row',
+    alignItems : 'center',
+    justifyContent : 'space-between'
   },
   toDoText : {
     color : "white",
