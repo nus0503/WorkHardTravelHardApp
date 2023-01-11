@@ -4,6 +4,7 @@ import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from './colors';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons'; 
+import {Edit} from './src/components/Edit';
 
 const STORAGE_KEY = "@toDos";
 const WORK_STORAGE_KEY = "@work";
@@ -14,6 +15,7 @@ export default function App() {
   const [text, setText] = useState("");
   const [toDos, setToDos] = useState({});
   const [done, setDone] = useState(false);
+  const [edit, setEdit] = useState(false);
   useEffect(() => {
     loadToDos();
     loadWork();
@@ -46,12 +48,15 @@ export default function App() {
     console.log("a");
     setToDos(JSON.parse(s));
   };
+  const updateText = () => {
+
+  };
   console.log("a");
   const addToDo = async () => {
     if (text === "") {
       return;
     }
-    const newToDos = Object.assign({}, toDos, {[Date.now()] : {text, working, done}});
+    const newToDos = Object.assign({}, toDos, {[Date.now()] : {text, working, done, edit}});
     console.log(newToDos);
     //                                     ↕
 
@@ -113,11 +118,17 @@ export default function App() {
       <ScrollView>
         {
         Object.keys(toDos).map((key) => (
-        toDos[key].working === working ? <View style={styles.toDo} key={key}>
+        toDos[key].working === working ? 
+       // console.log(key)
+        //<Edit key={key} item={key.text} />
+        <View style={styles.toDo} key={key}>
         <View>
-        <Text selectable={true} style={styles.toDoText}>{toDos[key].text}</Text>
+        <Text selectable={true} style={toDos[key].done === true ? {...styles.toDoText, textDecorationLine : 'line-through'} : styles.toDoText}>{toDos[key].text}</Text>
         </View>
         <View style={{flexDirection : 'row'}}>
+        <TouchableOpacity onPress={() => editingText(key)}>
+          <AntDesign name="edit" size={24} color="white" />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => complete(key)}>
           <MaterialIcons name={toDos[key].done ? "remove-done" : "done"} size={24} color="white" />
         </TouchableOpacity>
@@ -125,7 +136,8 @@ export default function App() {
           <AntDesign name="delete" size={24} color="white" />
         </TouchableOpacity>
         </View>
-        </View> : null
+        </View>
+        : null
         ))}
       </ScrollView>
     </View>
