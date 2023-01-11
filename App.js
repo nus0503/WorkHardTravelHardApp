@@ -13,6 +13,7 @@ export default function App() {
   console.log(working);
   const [text, setText] = useState("");
   const [toDos, setToDos] = useState({});
+  const [done, setDone] = useState(false);
   useEffect(() => {
     loadToDos();
     loadWork();
@@ -45,13 +46,13 @@ export default function App() {
     console.log("a");
     setToDos(JSON.parse(s));
   };
-  console.log(working);
+  console.log("a");
   const addToDo = async () => {
     if (text === "") {
       return;
     }
-    const newToDos = Object.assign({}, toDos, {[Date.now()] : {text, working}});
-
+    const newToDos = Object.assign({}, toDos, {[Date.now()] : {text, working, done}});
+    console.log(newToDos);
     //                                     ↕
 
     //const newToDos = {
@@ -61,6 +62,20 @@ export default function App() {
     setToDos(newToDos);
     await saveToDos(newToDos);
     setText("");
+  };
+  const complete = (key) => {
+    const completeToDo = {...toDos};
+    if (completeToDo[key].done === false) {
+      completeToDo[key].done = true;
+      console.log(completeToDo[key]);
+      setToDos(completeToDo);
+      saveToDos(completeToDo);
+    } else {
+      completeToDo[key].done = false;
+      console.log(completeToDo[key]);
+      setToDos(completeToDo);
+      saveToDos(completeToDo);
+    };
   };
   const deleteToDo = (key) => {
     Alert.alert("Delete To Do", "Are you Sure?", [
@@ -72,6 +87,7 @@ export default function App() {
         delete newToDos[key]
         setToDos(newToDos);
         saveToDos(newToDos);
+        
       }},
     ]);
   };
@@ -98,14 +114,17 @@ export default function App() {
         {
         Object.keys(toDos).map((key) => (
         toDos[key].working === working ? <View style={styles.toDo} key={key}>
+        <View>
         <Text selectable={true} style={styles.toDoText}>{toDos[key].text}</Text>
-        <TouchableOpacity>
-          <MaterialIcons name="done" size={24} color="black" />
-          <MaterialIcons name="remove-done" size={24} color="black" />
+        </View>
+        <View style={{flexDirection : 'row'}}>
+        <TouchableOpacity onPress={() => complete(key)}>
+          <MaterialIcons name={toDos[key].done ? "remove-done" : "done"} size={24} color="white" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => deleteToDo(key)}>
           <AntDesign name="delete" size={24} color="white" />
         </TouchableOpacity>
+        </View>
         </View> : null
         ))}
       </ScrollView>
